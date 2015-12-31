@@ -47,16 +47,19 @@ still be some conflicts.
 import warnings
 import re
 import os
+import sys
 from functools import partial
 
 from .mdx_liquid_tags import LiquidTags
 
 import IPython
 IPYTHON_VERSION = IPython.version_info[0]
+print("IPYTHON_VERSION")
 
 try:
     import nbformat
 except:
+    print("didn't find nbformat")
     pass
 
 if not IPYTHON_VERSION >= 1:
@@ -70,6 +73,7 @@ if IPYTHON_VERSION > 1:
 try:
     from nbconvert.filters.highlight import _pygments_highlight
 except ImportError:
+    print("\ndidn't find nbconvert\n")
     try:
         from IPython.nbconvert.filters.highlight import _pygments_highlight
     except ImportError:
@@ -321,15 +325,35 @@ def notebook(preprocessor, tag, markup):
                             **subcell_kwarg)
 
     # read and parse the notebook
-    with open(nb_path) as f:
-        nb_text = f.read()
+    with open(nb_path,encoding="utf8") as f:
+        print("this is where the problem is")
+        try:
+            nb_text = f.read()
+            branch=0
+        except:
+            nb_text = f.read()#.encode("utf-8").decode()
+            branch=1
+        print("path is %s, branch is %s"%(nb_path,branch))
+        #print(nb_text.encode("utf8"))
+        
+
         if IPYTHON_VERSION < 3:
             nb_json = IPython.nbformat.current.reads_json(nb_text)
         else:
+            print("version >3")
             try:
+                print("in try case")
                 nb_json = nbformat.reads(nb_text, as_version=4)
+                print("try case worked")
             except:
-                nb_json = IPython.nbformat.reads(nb_text, as_version=4)
+                print("in except case")
+#                from IPython import nbformat
+                import nbformat
+                print("imported nbformat")
+
+                #nb_json = IPython.nbformat.reads(nb_text, as_version=4)
+                nb_json = nbformat.reads(nb_text, as_version=4)#.encode("utf8").decode()
+                print("exception case caught")
 
     (body, resources) = exporter.from_notebook_node(nb_json)
 
